@@ -2,15 +2,8 @@
 require_once "connection.php";
 
 $method = $_SERVER['REQUEST_METHOD'];
-$request = $_SERVER['REQUEST_URI'];
-
-
-$path = str_replace($base_path, "", parse_url($request, PHP_URL_PATH));
-$pathParts = explode("/", trim($path, "/"));
-
-// Read JSON input
+$action = $_GET['action'] ?? '';
 $data = json_decode(file_get_contents("php://input"), true);
-
 
 // Helper function
 function response($statusCode, $status, $message, $data = null) {
@@ -24,10 +17,8 @@ function response($statusCode, $status, $message, $data = null) {
 }
 
 
-// ROUTES
-
-// POST /register
-if ($method === "POST" && $path === "/register") {
+// REGISTER
+if ($method === "POST" && $action === "register") {
     $username = $data['username'] ?? '';
     $email = $data['email'] ?? '';
     $password = $data['password'] ?? '';
@@ -56,14 +47,13 @@ if ($method === "POST" && $path === "/register") {
             "username" => $username,
             "email" => $email
         ]);
-    } else {
-        response(500, "error", "Registration failed");
     }
+
+    response(500, "error", "Registration failed");
 }
 
-
-// POST /login
-if ($method === "POST" && $path === "/login") {
+// LOGIN
+if ($method === "POST" && $action === "login") {
     $email = $data['email'] ?? '';
     $password = $data['password'] ?? '';
 
@@ -87,14 +77,11 @@ if ($method === "POST" && $path === "/login") {
     }
 
     unset($user['password']);
-
     response(200, "success", "Login successful", $user);
 }
 
-
-
-// GET /users
-if ($method === "GET" && $path === "/users") {
+// GET ALL USERS
+if ($method === "GET" && $action === "users") {
     $result = $conn->query("SELECT id, username, email, created_at FROM users");
     $users = [];
 
@@ -105,11 +92,9 @@ if ($method === "GET" && $path === "/users") {
     response(200, "success", "Users retrieved successfully", $users);
 }
 
-
-
-// GET /users/{id}
-if ($method === "GET" && $pathParts[0] === "users" && isset($pathParts[1])) {
-    $id = intval($pathParts[1]);
+// GET ONE USER
+if ($method === "GET" && $action === "user") {
+    $id = intval($_GET['id'] ?? 0);
 
     $stmt = $conn->prepare("SELECT id, username, email, created_at FROM users WHERE id = ?");
     $stmt->bind_param("i", $id);
@@ -123,11 +108,9 @@ if ($method === "GET" && $pathParts[0] === "users" && isset($pathParts[1])) {
     response(200, "success", "User retrieved successfully", $result->fetch_assoc());
 }
 
-
-
-// PUT /users/{id}
-if ($method === "PUT" && $pathParts[0] === "users" && isset($pathParts[1])) {
-    $id = intval($pathParts[1]);
+// UPDATE USER
+if ($method === "PUT" && $action === "update_user") {
+    $id = intval($_GET['id'] ?? 0);
     $username = $data['username'] ?? '';
     $email = $data['email'] ?? '';
 
@@ -141,19 +124,16 @@ if ($method === "PUT" && $pathParts[0] === "users" && isset($pathParts[1])) {
     if ($stmt->execute()) {
         if ($stmt->affected_rows > 0) {
             response(200, "success", "User updated successfully");
-        } else {
-            response(404, "error", "User not found or no changes made");
         }
-    } else {
-        response(500, "error", "Update failed");
+        response(404, "error", "User not found or no changes made");
     }
+
+    response(500, "error", "Update failed");
 }
 
-
-
-// DELETE /users/{id}
-if ($method === "DELETE" && $pathParts[0] === "users" && isset($pathParts[1])) {
-    $id = intval($pathParts[1]);
+// DELETE USER
+if ($method === "DELETE" && $action === "delete_user") {
+    $id = intval($_GET['id'] ?? 0);
 
     $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
     $stmt->bind_param("i", $id);
@@ -161,14 +141,11 @@ if ($method === "DELETE" && $pathParts[0] === "users" && isset($pathParts[1])) {
     if ($stmt->execute()) {
         if ($stmt->affected_rows > 0) {
             response(200, "success", "User deleted successfully");
-        } else {
-            response(404, "error", "User not found");
         }
-    } else {
-        response(500, "error", "Delete failed");
+        response(404, "error", "User not found");
     }
+
+    response(500, "error", "Delete failed");
 }
 
-
-// Default
 response(404, "error", "Endpoint not found");

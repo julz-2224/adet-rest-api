@@ -6,7 +6,7 @@ except ImportError:
     exit()
     
     
-BASE_URL = "http://localhost/user-api"
+BASE_URL = "http://localhost/adet-rest-api/server/service.php"
 
 
 def print_response(response):
@@ -32,7 +32,7 @@ def print_response(response):
 
 def get_all_users():
     try:
-        response = requests.get(f"{BASE_URL}/users", timeout=10)
+        response = requests.get(f"{BASE_URL}?action=users", timeout=10)
         print_response(response)
     except requests.exceptions.ConnectionError:
         print("\nError: Could not connect to the API server.")
@@ -46,7 +46,7 @@ def get_user_by_id():
     user_id = input("Enter user ID: ").strip()
 
     try:
-        response = requests.get(f"{BASE_URL}/users/{user_id}", timeout=10)
+        response = requests.get(f"{BASE_URL}?action=user&id={user_id}", timeout=10)
         print_response(response)
     except requests.exceptions.ConnectionError:
         print("\nError: Could not connect to the API server.")
@@ -67,7 +67,7 @@ def update_user():
     }
 
     try:
-        response = requests.put(f"{BASE_URL}/users/{user_id}", json=payload, timeout=10)
+        response = requests.put(f"{BASE_URL}?action=update_user&id={user_id}", json=payload, timeout=10)
         print_response(response)
     except requests.exceptions.ConnectionError:
         print("\nError: Could not connect to the API server.")
@@ -81,7 +81,7 @@ def delete_user():
     user_id = input("Enter user ID to delete: ").strip()
 
     try:
-        response = requests.delete(f"{BASE_URL}/users/{user_id}", timeout=10)
+        response = requests.delete(f"{BASE_URL}?action=delete_user&id={user_id}", timeout=10)
         print_response(response)
     except requests.exceptions.ConnectionError:
         print("\nError: Could not connect to the API server.")

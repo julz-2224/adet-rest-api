@@ -6,7 +6,7 @@ except ImportError:
     exit()
     
     
-BASE_URL = "http://localhost/user-api"
+BASE_URL = "http://localhost/adet-rest-api/server/service.php"
 
 
 def print_response(response):
@@ -37,7 +37,7 @@ def register():
     }
 
     try:
-        response = requests.post(f"{BASE_URL}/register", json=payload, timeout=10)
+        response = requests.post(f"{BASE_URL}?action=register", json=payload, timeout=10)
         print_response(response)
     except requests.exceptions.ConnectionError:
         print("\nError: Could not connect to the API server.")
@@ -58,7 +58,7 @@ def login():
     }
 
     try:
-        response = requests.post(f"{BASE_URL}/login", json=payload, timeout=10)
+        response = requests.post(f"{BASE_URL}?action=login", json=payload, timeout=10)
         print_response(response)
     except requests.exceptions.ConnectionError:
         print("\nError: Could not connect to the API server.")

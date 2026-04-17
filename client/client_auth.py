@@ -1,11 +1,10 @@
-import os
-import re
-from getpass import getpass
-
 try:
+    import os
+    import re
+    from getpass import getpass
     import requests
 except ImportError:
-    print("The 'requests' package is not installed.")
+    print("Some packages is not installed.")
     print("Please install it by running: pip install -r client/requirements.txt")
     exit()
     

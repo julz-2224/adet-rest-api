@@ -5,7 +5,6 @@ except ImportError:
     print("Please install it by running: pip install -r client/requirements.txt")
     exit()
     
-    
 BASE_URL = "http://localhost/adet-rest-api/server/service.php"
 
 def print_response(response):

@@ -51,6 +51,4 @@ if (!$conn->query($createUsersTableSql)) {
 }
 
 
-// Set headers for security and JSON handling
-header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: *");
+

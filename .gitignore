@@ -21,6 +21,8 @@ Homestead.yaml
 Homestead.json
 /.vagrant
 .phpunit.result.cache
+./.vscode
+api_keys.db
 
 /public/build
 /storage/pail

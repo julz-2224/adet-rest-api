@@ -31,3 +31,5 @@ api_keys.db
 .env.production
 .phpactor.json
 auth.json
+
+.vscode/

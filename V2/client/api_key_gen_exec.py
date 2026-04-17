@@ -37,7 +37,7 @@ def generate_api():
 
 
 def execute_ai():
-    print("\n=== AI EXECUTION===")
+    print("\n=== AI EXECUTION ===")
     api_key = input("Enter API key: ").strip()
     month = input("Enter month: ").strip()
     raw = input("Is raw?(Y/n): ").strip()

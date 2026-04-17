@@ -1,9 +1,22 @@
 <?php
 require_once "connection.php";
 
+// Set headers for security and JSON handling
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: *");
+
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 $data = json_decode(file_get_contents("php://input"), true);
+
+// Validation helpers
+function is_valid_email($email) {
+    return filter_var($email,  ) !== false;
+}
+
+function is_valid_username($username) {
+    return strlen($username) >= 3 && strlen($username) <= 50 && preg_match('/^[a-zA-Z0-9_-]+$/', $username);
+}
 
 // Helper function
 function response($statusCode, $status, $message, $data = null) {
@@ -25,6 +38,18 @@ if ($method === "POST" && $action === "register") {
 
     if (empty($username) || empty($email) || empty($password)) {
         response(400, "error", "Username, email, and password are required");
+    }
+
+    if (!is_valid_username($username)) {
+        response(400, "error", "Username must be 3-50 characters and contain only letters, numbers, dashes, and underscores");
+    }
+
+    if (!is_valid_email($email)) {
+        response(400, "error", "Invalid email format");
+    }
+
+    if (strlen($password) < 8) {
+        response(400, "error", "Password must be at least 8 characters");
     }
 
     $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
@@ -67,13 +92,13 @@ if ($method === "POST" && $action === "login") {
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        response(404, "error", "User not found");
+        response(401, "error", "Invalid email or password");
     }
 
     $user = $result->fetch_assoc();
 
     if (!password_verify($password, $user['password'])) {
-        response(401, "error", "Invalid password");
+        response(401, "error", "Invalid email or password");
     }
 
     unset($user['password']);
@@ -114,8 +139,20 @@ if ($method === "PUT" && $action === "update_user") {
     $username = $data['username'] ?? '';
     $email = $data['email'] ?? '';
 
+    if ($id <= 0) {
+        response(400, "error", "Invalid user ID");
+    }
+
     if (empty($username) || empty($email)) {
         response(400, "error", "Username and email are required");
+    }
+
+    if (!is_valid_username($username)) {
+        response(400, "error", "Username must be 3-50 characters and contain only letters, numbers, dashes, and underscores");
+    }
+
+    if (!is_valid_email($email)) {
+        response(400, "error", "Invalid email format");
     }
 
     $stmt = $conn->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
@@ -125,7 +162,7 @@ if ($method === "PUT" && $action === "update_user") {
         if ($stmt->affected_rows > 0) {
             response(200, "success", "User updated successfully");
         }
-        response(404, "error", "User not found or no changes made");
+        response(404, "error", "User not found");
     }
 
     response(500, "error", "Update failed");
@@ -134,6 +171,10 @@ if ($method === "PUT" && $action === "update_user") {
 // DELETE USER
 if ($method === "DELETE" && $action === "delete_user") {
     $id = intval($_GET['id'] ?? 0);
+
+    if ($id <= 0) {
+        response(400, "error", "Invalid user ID");
+    }
 
     $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
     $stmt->bind_param("i", $id);

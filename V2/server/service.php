@@ -5,20 +5,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 $data = json_decode(file_get_contents("php://input"), true);
 
-function response($statusCode, $status, $message, $data = null) {
-    http_response_code($statusCode);
-    echo json_encode([
-        "status" => $status,
-        "message" => $message,
-        "data" => $data
-    ]);
-    global $socket;
-    if (isset($socket) && is_resource($socket)) {
-        fclose($socket);
-    } 
-    exit;
-}
-
 // CREATE APIS
 if ($method === "POST" && $action === "generate_api") {
     $row = false;
@@ -79,8 +65,9 @@ if ($method === "POST" && $action === "execute_ai") {
     fwrite($socket, $payload . "\n");
 
     $result = get_msg($socket);
+
     if (empty($result['messages'])) {
-        response(500, "error", "No response from AI server");
+        response(503, "error", "No response from AI server");
     }
     $ai_response = $result['messages'][0]['data'] ?? null;
 

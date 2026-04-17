@@ -17,6 +17,19 @@ $db_conn->exec("
         `created_at` TEXT
     );
 ");
+function response($statusCode, $status, $message, $data = null) {
+    http_response_code($statusCode);
+    echo json_encode([
+        "status" => $status,
+        "message" => $message,
+        "data" => $data
+    ]);
+    global $socket;
+    if (isset($socket) && is_resource($socket)) {
+        fclose($socket);
+    } 
+    exit;
+}
 
 // fix: $socket reinitialize 
 function ai_socket_connect() {
@@ -25,6 +38,7 @@ function ai_socket_connect() {
     $socket = fsockopen($ai_host, $ai_port, $errno, $errstr, 10);
 
     if (!$socket) {
+        response(503, "error", "No response from AI server");
         throw new Exception("AI connection failed: $errstr ($errno)");
     }
 
@@ -51,14 +65,18 @@ function get_msg($socket, $chunk_size = 1024) {
         // add to buffer
         $buffer .= $chunk;
 
-        // read until it cannot anymore
+        // read until there is no '\n' anymore
         while (($pos = strpos($buffer, "\n")) !== false) {
-            // difference 
+            // take data from beginning to '\n'
             $message = substr($buffer, 0, $pos);
+
+            // remove processed data, keep remaining data for next loop
             $buffer = substr($buffer, $pos + 1);
+
             // decode after
             $data = json_decode($message, true);
 
+            // skip when error occurs when decoding
             if (json_last_error() !== JSON_ERROR_NONE) {
                 continue;
             }
@@ -70,7 +88,7 @@ function get_msg($socket, $chunk_size = 1024) {
             break; // stop after first full response
         }
     }
-    
+
     return [
         'messages' => $messages,
         'buffer' => $buffer
@@ -106,8 +124,3 @@ function get_msg($socket, $chunk_size = 1024) {
 
 //echo "Server: $response->response_message\n";
 //fclose($socket);
-
-
-
-
-

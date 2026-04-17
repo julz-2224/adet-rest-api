@@ -283,6 +283,3 @@ curl -X DELETE "http://localhost/adet-rest-api/server/service.php?action=delete_
   - `update_user` -> `PUT ?action=update_user&id=<id>`
   - `delete_user` -> `DELETE ?action=delete_user&id=<id>`
 
-## Scope Note
-
-This document is intentionally limited to **V1** and excludes all files in `V2/`.

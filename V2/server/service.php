@@ -23,6 +23,8 @@ function response($statusCode, $status, $message, $data = null) {
 if ($method === "POST" && $action === "generate_api") {
     $row = false;
     $key = '';  
+
+    // making sure newly created keys are unique
     do {
         $key = bin2hex(random_bytes(16));
         $check = $db_conn->prepare("SELECT api_key FROM api_keys WHERE api_key = :api_key");
@@ -31,6 +33,7 @@ if ($method === "POST" && $action === "generate_api") {
         $row = $result->fetchArray(SQLITE3_ASSOC);
     } while($row);
 
+    // insert new key into the database
     $stmt = $db_conn->prepare("INSERT INTO api_keys (api_key) VALUES (:api_key)");
     $stmt->bindValue(":api_key", $key, SQLITE3_TEXT);
     $result = $stmt->execute();
@@ -51,25 +54,40 @@ if ($method === "POST" && $action === "execute_ai") {
     if (!$key || !$month || $raw === null) {
         response(400, "error", "api_key, month, raw parameters are required");
     }
-
+    // check API if it exists inside database
     $check = $db_conn->prepare("SELECT api_key FROM api_keys WHERE api_key = :api_key");
     $check->bindValue(":api_key", $key, SQLITE3_TEXT);
     $result = $check->execute();
     $row = $result->fetchArray(SQLITE3_ASSOC);
+
     if (!$row) {
         response(404, "error", "api_key not found");
     }
 
-    $data = [
-        "cmd" => "run",
-        "month" => $month,
-        "raw" => $raw
-    ];
+    // create new socket
+    $socket = ai_socket_connect();
 
-    $json_data = json_encode($data);
-    fwrite($socket, $json_data);
-    $response = json_decode(fread($socket, 1024));  
-    response(200, "success", "AI Execution is successful!", $response->data);
+    // build payload
+    $payload = json_encode(
+        [
+            "cmd" => "run",
+            "month" => $month,
+            "raw" => $raw
+        ]
+    );
+
+    fwrite($socket, $payload . "\n");
+
+    $result = get_msg($socket);
+    if (empty($result['messages'])) {
+        response(500, "error", "No response from AI server");
+    }
+    $ai_response = $result['messages'][0]['data'] ?? null;
+
+    if (!isset($ai_response) || empty($ai_response)) {
+        response(500, "error", "Invalid AI server response structure");
+    }
+    response(200, "success", "AI Execution is successful!", $ai_response);
 }
 
 // GET ALL API KEYS
@@ -113,4 +131,3 @@ if ($method === "DELETE" && $action === "delete_api_key") {
 }
 
 response(404, "error", "Endpoint not found");
-fclose($socket);

@@ -10,7 +10,7 @@ This document covers the API implemented in `server/service.php` and `server/con
 - Default local URL:  
   `http://localhost/adet-rest-api/server/service.php`
 
-- All routes use query parameter:
+- All routes use query parametersssssssssssss:
 ```
 
 ?action=<route_name>
